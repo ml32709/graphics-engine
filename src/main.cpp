@@ -16,10 +16,6 @@
 // settings
 const unsigned int SCR_WIDTH = 1600;
 const unsigned int SCR_HEIGHT = 1200;
-// const char* VERT_PATH = "C:/Users/matth/Desktop/projects/software/learnOpenGL/src/shaders/vert.txt";
-// const char* FRAG_PATH = "C:/Users/matth/Desktop/projects/software/learnOpenGL/src/shaders/frag.txt";
-const char* VERT_PATH = "src/shaders/vert.txt";
-const char* FRAG_PATH = "src/shaders/frag.txt";
 
 // camera
 bool firstmouse = true;
@@ -98,7 +94,8 @@ int main()
     glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &nrAttributes);
     std::cout << "Maximum nr of vertex attributes supported: " << nrAttributes << "\n" << std::endl;
     
-    Shader shaderProgram(VERT_PATH, FRAG_PATH);
+    Shader shaderProgram("src/shaders/vert.txt", "src/shaders/frag.txt");
+    Shader lightSourceShaderProgram("src/shaders/lightVert.txt", "src/shaders/lightFrag.txt");
 
     // cube
     float vertices[] = {
@@ -158,23 +155,29 @@ int main()
         glm::vec3(-1.3f,  1.0f, -1.5f)  
     };
 
-    // create buffer objects
+    // buffer objects for cubes 
     unsigned int VBO, VAO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
-
-    // bind VAO 1
+    // bind VAO
     glBindVertexArray(VAO);
-
     // copy vertices array in a buffer for OpenGL to use
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    
-    // set vertex attributes pointers
-    int stride = 3;
-
     // position attribute
+    int stride = 3;
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    // VAO for lighting
+    unsigned int lightVAO;
+    glGenVertexArrays(1, &lightVAO);
+    glBindVertexArray(lightVAO);
+    // we only need to bind to the VBO, the container's VBO's data already contains the data
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    // set the vertex attribute
+    int lightStride = 3;
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, lightStride * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
     // z buffer stuff
@@ -204,15 +207,14 @@ int main()
 
         // shader program 
         shaderProgram.use();
+        shaderProgram.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
+        shaderProgram.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
 
-        // camera
+        // view/projection transforms
         glm::mat4 projection = glm::perspective(glm::radians(camera.GetZoomValue()), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
-
-        // combine matrices for 3D
-        glUniformMatrix4fv(glGetUniformLocation(shaderProgram.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-        glUniformMatrix4fv(glGetUniformLocation(shaderProgram.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
-
+        shaderProgram.setMat4("projection", projection);
+        shaderProgram.setMat4("view", view);
         // cubes
         glBindVertexArray(VAO);
         for(unsigned int i = 0; i < 10; i++) {
@@ -223,11 +225,24 @@ int main()
                 angle = glfwGetTime() * 25.0f;
             }
             model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-            glUniformMatrix4fv(glGetUniformLocation(shaderProgram.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
-            
+            shaderProgram.setMat4("model", model);            
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
-        
+
+        // lamp
+        lightSourceShaderProgram.use();
+        // view/projection transforms are the same
+        lightSourceShaderProgram.setMat4("projection", projection);
+        lightSourceShaderProgram.setMat4("view", view);
+        // cube
+        glBindVertexArray(lightVAO);
+        glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, lightPos);
+        model = glm::scale(model, glm::vec3(0.2f));
+        lightSourceShaderProgram.setMat4("model", model);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
         glBindVertexArray(0);
 
         // check and call events and swap the buffers
