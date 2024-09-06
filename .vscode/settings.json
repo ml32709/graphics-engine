@@ -52,5 +52,6 @@
         "ctime": "cpp",
         "ratio": "cpp",
         "iomanip": "cpp"
-    }
+    },
+    "cmake.sourceDirectory": "C:/Users/matth/Desktop/projects/software/learnOpenGL/include/glm"
 }
