@@ -166,10 +166,10 @@ int main()
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
     // position attribute
     int stride = 6;
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride * sizeof(float), (void*)(0 * sizeof(float)));
     glEnableVertexAttribArray(0);
     // normal attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride * sizeof(float), (void*)3);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
     // VAO for lighting
@@ -180,7 +180,7 @@ int main()
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     // set the vertex attribute
     int lightStride = 6;
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, lightStride * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, lightStride * sizeof(float), (void*)(0 * sizeof(float)));
     glEnableVertexAttribArray(0);
 
     // z buffer stuff
