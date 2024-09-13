@@ -100,8 +100,8 @@ int main()
     glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &nrAttributes);
     std::cout << "Maximum nr of vertex attributes supported: " << nrAttributes << "\n" << std::endl;
     
-    Shader shaderProgram("src/shaders/vert.txt", "src/shaders/frag.txt");
-    Shader lightSourceShaderProgram("src/shaders/lightVert.txt", "src/shaders/lightFrag.txt");
+    Shader shaderProgram("src/shaders/gouraudVert.vert", "src/shaders/gouraudFrag.frag");
+    Shader lightSourceShaderProgram("src/shaders/lampVert.vert", "src/shaders/lampFrag.frag");
 
     // cube
     float vertices[] = {
@@ -218,7 +218,7 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // circling lamp
-        float angle = 5.0f;
+        float angle = 1.0f;
         glm::vec3 lightPos(cos(glfwGetTime() * angle) * 1.6f, 1.0f, sin(glfwGetTime() * angle) * 1.6f);
 
         // shader program 
