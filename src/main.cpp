@@ -43,6 +43,12 @@ void processInput(GLFWwindow *window, float deltaTime) {
     if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
         camera.ProcessKeyboard(RIGHT, deltaTime);
     }
+    if(glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+        camera.ProcessKeyboard(UP, deltaTime);
+    }
+    if(glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) {
+        camera.ProcessKeyboard(DOWN, deltaTime);
+    }
 }
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
@@ -194,7 +200,8 @@ int main()
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
 
-    glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+    // starting position of lamp
+    // glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 
     // Render loop
     while(!glfwWindowShouldClose(window)) {
@@ -210,6 +217,10 @@ int main()
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        // circling lamp
+        float angle = 5.0f;
+        glm::vec3 lightPos(cos(glfwGetTime() * angle) * 1.6f, 1.0f, sin(glfwGetTime() * angle) * 1.6f);
+
         // shader program 
         shaderProgram.use();
         shaderProgram.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
@@ -221,11 +232,13 @@ int main()
         glm::mat4 view = camera.GetViewMatrix();
         shaderProgram.setMat4("projection", projection);
         shaderProgram.setMat4("view", view);
+        shaderProgram.setVec3("viewPos", camera.Position);
+
         // cubes
+        glm::mat4 model = glm::mat4(1.0f);
+        shaderProgram.setMat4("model", model);
+
         glBindVertexArray(VAO);
-        glm::mat4 model1 = glm::mat4(1.0f);
-        model1 = glm::translate(model1, cubePositions[0]);
-        shaderProgram.setMat4("model", model1);
         glDrawArrays(GL_TRIANGLES, 0, 36);
 
         // for(unsigned int i = 0; i < 10; i++) {
@@ -242,18 +255,15 @@ int main()
 
         // lamp
         lightSourceShaderProgram.use();
-        // view/projection transforms are the same
         lightSourceShaderProgram.setMat4("projection", projection);
         lightSourceShaderProgram.setMat4("view", view);
-        // cube
-        glBindVertexArray(lightVAO);
-        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::mat4(1.0f);
         model = glm::translate(model, lightPos);
         model = glm::scale(model, glm::vec3(0.2f));
         lightSourceShaderProgram.setMat4("model", model);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
 
-        glBindVertexArray(0);
+        glBindVertexArray(lightVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
 
         // check and call events and swap the buffers
         glfwSwapBuffers(window);
