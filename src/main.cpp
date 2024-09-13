@@ -100,7 +100,7 @@ int main()
     glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &nrAttributes);
     std::cout << "Maximum nr of vertex attributes supported: " << nrAttributes << "\n" << std::endl;
     
-    Shader shaderProgram("src/shaders/gouraudVert.vert", "src/shaders/gouraudFrag.frag");
+    Shader shaderProgram("src/shaders/phongVert.vert", "src/shaders/phongFrag.frag");
     Shader lightSourceShaderProgram("src/shaders/lampVert.vert", "src/shaders/lampFrag.frag");
 
     // cube
@@ -208,7 +208,10 @@ int main()
         // calculate time
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
-        lastFrame - currentFrame;
+        lastFrame = currentFrame;
+
+        // float fps = 1.0f / deltaTime;
+        // std::cout << fps << std::endl;
 
         // input
         processInput(window, deltaTime);
@@ -219,7 +222,7 @@ int main()
 
         // circling lamp
         float angle = 1.0f;
-        glm::vec3 lightPos(cos(glfwGetTime() * angle) * 1.6f, 1.0f, sin(glfwGetTime() * angle) * 1.6f);
+        glm::vec3 lightPos(cos(glfwGetTime() * angle) * 1.6f, 0.0f, sin(glfwGetTime() * angle) * 1.6f);
 
         // shader program 
         shaderProgram.use();
@@ -234,8 +237,10 @@ int main()
         shaderProgram.setMat4("view", view);
         shaderProgram.setVec3("viewPos", camera.Position);
 
-        // cubes
+        // cube
         glm::mat4 model = glm::mat4(1.0f);
+        angle = glfwGetTime() * 20.0f;
+        model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
         shaderProgram.setMat4("model", model);
 
         glBindVertexArray(VAO);
