@@ -100,7 +100,7 @@ int main()
     glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &nrAttributes);
     std::cout << "Maximum nr of vertex attributes supported: " << nrAttributes << "\n" << std::endl;
     
-    Shader shaderProgram("src/shaders/phongVert.vert", "src/shaders/phongFrag.frag");
+    Shader shaderProgram("src/shaders/phongVert.vert", "src/shaders/materialFrag.frag");
     Shader lightSourceShaderProgram("src/shaders/lampVert.vert", "src/shaders/lampFrag.frag");
 
     // cube
@@ -198,7 +198,7 @@ int main()
         lastFrame = currentFrame;
 
         float fps = 1.0f / deltaTime;
-        std::cout << fps << std::endl;
+        // std::cout << fps << std::endl;
 
         // input
         processInput(window, deltaTime);
@@ -210,12 +210,19 @@ int main()
         // circling lamp
         float angle = 1.0f;
         glm::vec3 lightPos(cos(glfwGetTime() * angle) * 1.6f, 0.0f, sin(glfwGetTime() * angle) * 1.6f);
+        glm::vec3 lightColor = glm::vec3(1.0f);
+        // lightColor.x = sin(glfwGetTime() * 2.0);
+        // lightColor.y = sin(glfwGetTime() * 0.7f);
+        // lightColor.z = sin(glfwGetTime() * 1.3f);
 
         // shader program 
         shaderProgram.use();
-        shaderProgram.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
-        shaderProgram.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
-        shaderProgram.setVec3("lightPos", lightPos);
+        shaderProgram.setVec3("light.position", lightPos);
+        glm::vec3 diffuseColor = lightColor * glm::vec3(1.0f);
+        glm::vec3 ambientColor = lightColor * glm::vec3(1.0f);
+        shaderProgram.setVec3("light.ambient", ambientColor); // darker than diff
+        shaderProgram.setVec3("light.diffuse", diffuseColor); // darker than spec
+        shaderProgram.setVec3("light.specular", 1.0f, 1.0f, 1.0f);    
 
         // view/projection transforms
         glm::mat4 projection = glm::perspective(glm::radians(camera.GetZoomValue()), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
@@ -229,6 +236,10 @@ int main()
         angle = glfwGetTime() * 20.0f;
         model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
         shaderProgram.setMat4("model", model);
+        shaderProgram.setVec3("material.ambient",0.19125f, 0.0735f, 0.0225f);
+        shaderProgram.setVec3("material.diffuse", 0.7038f, 0.27048f, 0.0828f);
+        shaderProgram.setVec3("material.specular", 0.256777f, 0.137622f, 0.086014f);
+        shaderProgram.setFloat("material.shininess", 32.0f);
 
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -241,6 +252,7 @@ int main()
         model = glm::translate(model, lightPos);
         model = glm::scale(model, glm::vec3(0.2f));
         lightSourceShaderProgram.setMat4("model", model);
+        lightSourceShaderProgram.setVec3("lampColor", lightColor);
 
         glBindVertexArray(lightVAO);
         glDrawArrays(GL_TRIANGLES, 0, 36);
