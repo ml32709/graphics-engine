@@ -70,7 +70,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
     camera.ProcessMouseScroll(yoffset);
 }
 
-unsigned int loadTexture(char const * path)
+unsigned int loadTexture(const char* path)
 {
     unsigned int textureID;
     glGenTextures(1, &textureID);
@@ -137,7 +137,7 @@ int main()
     glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &nrAttributes);
     std::cout << "Maximum nr of vertex attributes supported: " << nrAttributes << "\n" << std::endl;
     
-    Shader shaderProgram("src/shaders/phongVert.vert", "src/shaders/materialFrag.frag");
+    Shader shaderProgram("src/shaders/Vert.vert", "src/shaders/lightmapFrag.frag");
     Shader lightSourceShaderProgram("src/shaders/lampVert.vert", "src/shaders/lampFrag.frag");
 
     // cube
@@ -190,25 +190,19 @@ int main()
     unsigned int VBO, VAO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
-    // bind VAO
-    glBindVertexArray(VAO);
+
     // copy vertices array in a buffer for OpenGL to use
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    // position attribute
+
+    glBindVertexArray(VAO);
     int stride = 8;
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride * sizeof(float), (void*)(0 * sizeof(float)));
     glEnableVertexAttribArray(0);
-    // normal attribute
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
-
-    // texture attribute
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride * sizeof(float), (void*)(6 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-    // texture
-    
-    
+    glEnableVertexAttribArray(2);
 
     // VAO for lighting
     unsigned int lightVAO;
@@ -216,10 +210,15 @@ int main()
     glBindVertexArray(lightVAO);
     // we only need to bind to the VBO, the container's VBO's data already contains the data
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    // set the vertex attribute
-    int lightStride = 8;
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, lightStride * sizeof(float), (void*)(0 * sizeof(float)));
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride * sizeof(float), (void*)(0 * sizeof(float)));
     glEnableVertexAttribArray(0);
+
+    // texture
+    unsigned int diffuseMap = loadTexture("assets/woodandmetalcontainer.png");
+
+    shaderProgram.use();
+    shaderProgram.setInt("material.diffuse", 0);
 
     // z buffer stuff
     glEnable(GL_DEPTH_TEST);
@@ -232,18 +231,12 @@ int main()
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
 
-    // starting position of lamp
-    // glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
-
     // Render loop
     while(!glfwWindowShouldClose(window)) {
         // calculate time
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
-
-        float fps = 1.0f / deltaTime;
-        // std::cout << fps << std::endl;
 
         // input
         processInput(window, deltaTime);
@@ -256,18 +249,13 @@ int main()
         float angle = 1.0f;
         glm::vec3 lightPos(cos(glfwGetTime() * angle) * 1.6f, 0.0f, sin(glfwGetTime() * angle) * 1.6f);
         glm::vec3 lightColor = glm::vec3(1.0f);
-        // lightColor.x = sin(glfwGetTime() * 2.0);
-        // lightColor.y = sin(glfwGetTime() * 0.7f);
-        // lightColor.z = sin(glfwGetTime() * 1.3f);
 
         // shader program 
         shaderProgram.use();
         shaderProgram.setVec3("light.position", lightPos);
-        glm::vec3 diffuseColor = lightColor * glm::vec3(1.0f);
-        glm::vec3 ambientColor = lightColor * glm::vec3(1.0f);
-        shaderProgram.setVec3("light.ambient", ambientColor); // darker than diff
-        shaderProgram.setVec3("light.diffuse", diffuseColor); // darker than spec
-        shaderProgram.setVec3("light.specular", 1.0f, 1.0f, 1.0f);    
+        shaderProgram.setVec3("light.ambient", 0.2f, 0.2f, 0.2f); 
+        shaderProgram.setVec3("light.diffuse", 0.5f, 0.5f, 0.5f);
+        shaderProgram.setVec3("light.specular", 1.0f, 1.0f, 1.0f);  
 
         // view/projection transforms
         glm::mat4 projection = glm::perspective(glm::radians(camera.GetZoomValue()), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
@@ -281,12 +269,11 @@ int main()
         angle = glfwGetTime() * 20.0f;
         model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
         shaderProgram.setMat4("model", model);
-        shaderProgram.setInt("material.diffuse", 0);
-        shaderProgram.setVec3("material.specular", 0.256777f, 0.137622f, 0.086014f);
-        shaderProgram.setFloat("material.shininess", 32.0f);
+        shaderProgram.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
+        shaderProgram.setFloat("material.shininess", 64.0f);
 
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture);
+        glBindTexture(GL_TEXTURE_2D, diffuseMap);
 
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 36);
