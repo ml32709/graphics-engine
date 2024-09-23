@@ -214,11 +214,13 @@ int main()
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride * sizeof(float), (void*)(0 * sizeof(float)));
     glEnableVertexAttribArray(0);
 
-    // texture
-    unsigned int diffuseMap = loadTexture("assets/woodandmetalcontainer.png");
+    // textures
+    unsigned int diffuseMap = loadTexture("assets/wmContainerDiffuse.png");
+    unsigned int specularMap = loadTexture("assets/wmContainerSpecular.png");
 
     shaderProgram.use();
     shaderProgram.setInt("material.diffuse", 0);
+    shaderProgram.setInt("material.specular", 1);
 
     // z buffer stuff
     glEnable(GL_DEPTH_TEST);
@@ -274,6 +276,8 @@ int main()
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, diffuseMap);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, specularMap);
 
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 36);
